@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student AI Chatbot - Naarad</title>
+    <style>
+        /* Gradient Background */
+        body {
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            width: 40%;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        /* Header */
+        .header {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 15px 15px 0 0;
+            font-size: 26px;
+            font-weight: bold;
+        }
+
+        /* Chat Box */
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 20px 0;
+            text-align: left;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        /* Chat Input */
+        .chat-input {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        /* Input Field */
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #2a5298;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        .chat-input button {
+            padding: 12px 18px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 25px;
+            transition: 0.3s ease;
+        }
+
+        /* Send Button */
+        .send-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Voice Button */
+        .mic-btn {
+            background: #ff5722;
+            color: white;
+        }
+
+        /* Button Hover Effects */
+        .chat-input button:hover {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">🤖<span style="color: yellow;">Naarad bhai</span> 📢</div>
+        <div class="chat-box" id="chat-box"></div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Type your question...">
+            <button onclick="sendMessage()" class="send-btn">Send</button>
+            <button onclick="startVoice()" class="mic-btn">🎤</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = document.getElementById("user-input").value;
+            let chatBox = document.getElementById("chat-box");
+
+            if (userInput.trim() === "") return;
+
+            // Display user message
+            chatBox.innerHTML += `<div><strong>You:</strong> ${userInput}</div>`;
+            document.getElementById("user-input").value = "";
+
+            // Send message to backend
+            fetch("http://127.0.0.1:5000/chat", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message: userInput }) // Proper JSON format
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json();
+})
+.then(data => {
+    chatBox.innerHTML += `<div><strong>Naarad:</strong> ${data.reply}</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll chat to latest message
+    speakResponse(data.reply); // Speak the response
+})}
+
+        function startVoice() {
+            let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                let voiceInput = event.results[0][0].transcript;
+                document.getElementById("user-input").value = voiceInput;
+                sendMessage();
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Voice recognition error:", event.error);
+            };
+        }
+
+        function speakResponse(responseText) {
+            let speech = new SpeechSynthesisUtterance();
+            speech.text = responseText;
+            speech.lang = "en-US";
+            speech.volume = 1;
+            speech.rate = 1;
+            speech.pitch = 1;
+            window.speechSynthesis.speak(speech);
+        }
+    </script>
+</body>
+</html>
